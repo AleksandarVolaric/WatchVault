@@ -1,0 +1,12 @@
+# API
+.env
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Local
+movie_tracker.db
+test_movie_tracker.db
+*.db-journal
