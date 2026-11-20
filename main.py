@@ -3,6 +3,9 @@ from validation import (
     get_menu_choice,
 )
 
+from api import (
+    search_titles,
+)
 
 # Movie Tracker
 
@@ -36,12 +39,38 @@ def search_title_flow():
     search_input = get_non_empty_text(
         "Enter the title of the movie or series to search: "
     )
-    return search_input
 
-# Call API to search for movies
-# Check if it returns results
-# Display results
-# User chooses the result
+    results = search_titles(search_input)
+
+    if not results:
+        print("No movies or Series found")
+        return    
+    
+    for number, result in enumerate(results, start=1):
+        if result["media_type"] == "movie":
+            name = result["title"]
+            date = result["release_date"]
+            display_type = "Movie"
+        else:
+            name = result["name"]
+            date = result["first_air_date"]
+            display_type = "Series"
+        if date:
+            year = date[:4]
+        else:
+            year = "Unknown"
+
+        print(f"{number}. {name} ({year}) [{display_type}]")
+
+    choice = get_menu_choice(
+        "Choose a result: ",
+        1,
+        len(results),
+    )
+    selected_result = results[choice - 1]
+    selected_id = selected_result["id"]
+    ...
+
 
 
 # FUTURE LIBRARY FLOW
