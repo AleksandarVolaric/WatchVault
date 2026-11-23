@@ -1,16 +1,17 @@
 # WatchVault
 
-WatchVault is a Python command-line learning project for searching movies and TV series with The Movie Database (TMDB) API. The v0.1.0 learning focus is REST API fundamentals: HTTP requests, JSON responses, query parameters, and environment variables.
+WatchVault is a Python command-line learning project for searching movies and TV series with The Movie Database (TMDB) API. In v0.2.0, the learning focus is using data from one REST API request (the selected TMDB ID and media type) to make a second request to the appropriate movie or TV endpoint.
 
 ## Current features
 
 - Search TMDB for movies and TV series.
-- Send HTTP GET requests with `requests` and query parameters, authenticating with the TMDB Read Access Token in the HTTP Authorization header.
-- Parse the JSON response and filter results to movies and TV series.
-- Display numbered results with each title, release year, and media type.
-- Show `Unknown` when a result has no release date.
-- Let the user select a result and extract its TMDB ID.
-- Handle searches with no results and basic timeout, network, and HTTP/API errors.
+- Send HTTP GET requests with `requests`, query parameters for search, and Bearer token authentication.
+- Parse search JSON and filter results to movies and TV series.
+- Display numbered search results with each title, release year, and media type.
+- Let the user select a result, then use its TMDB ID and media type to request title details. Movies use TMDB's `/movie/{id}` endpoint; TV series use `/tv/{id}`.
+- Display the selected title's name, release or first-air year, type, genres, TMDB rating (to one decimal place), and overview. Show `Unknown` when its date is missing.
+- Display runtime for movies or the number of seasons for TV series.
+- Handle searches with no results and basic timeout, network, and HTTP/API request errors.
 - Validate non-empty search input and numbered menu choices.
 
 ## Technologies used
@@ -24,10 +25,10 @@ WatchVault is a Python command-line learning project for searching movies and TV
 
 ```text
 .
-├── api.py          # TMDB search request and response handling
-├── main.py         # Command-line menu and search flow
+├── api.py          # TMDB search and title-detail requests
+├── main.py         # Command-line menu, search, and title details
 ├── validation.py   # CLI input validation
-├── tests/          # Project tests
+├── tests/          # Reserved for future automated tests
 ├── .env            # Local TMDB token; create this file yourself
 └── .gitignore      # Keeps .env and other local files out of Git
 ```
@@ -58,18 +59,17 @@ From the project root, run:
 python main.py
 ```
 
-Choose the search option, enter a movie or series title, and select a result by its displayed number.
+Choose the search option, enter a movie or series title, and select a result by its displayed number to view its TMDB details.
 
 ## Current project status / version
 
-WatchVault is an early-stage learning and portfolio project. **Current version: v0.1.0.** The current CLI supports searching and selecting a TMDB result; a persistent personal library is not part of this version.
+WatchVault is an early-stage learning and portfolio project. **Current version: v0.2.0.** The CLI supports searching, selecting a TMDB result, and viewing its details. The displayed “Add to Library” option is a placeholder; this version does not save a library.
 
 ## Short roadmap
 
 Future goals include:
 
-- Detailed TMDB title information
-- A local SQLite library
+- v0.3.0: A local SQLite library
 - Personal watch tracking
 - Genres and series progress
 - Library search and filtering
