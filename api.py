@@ -28,7 +28,7 @@ def search_titles(search_text):
 
     except requests.exceptions.Timeout:
         print("The request timed out")
-        return[]
+        return []
     
     except requests.exceptions.RequestException:
         print("A network or API error occurred.")

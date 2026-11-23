@@ -1,6 +1,6 @@
 # WatchVault
 
-WatchVault is a Python command-line learning project for searching movies and TV series with The Movie Database (TMDB) API. In v0.2.0, the learning focus is using data from one REST API request (the selected TMDB ID and media type) to make a second request to the appropriate movie or TV endpoint.
+WatchVault is a Python command-line learning project for searching movies and TV series with The Movie Database (TMDB) API and saving selected titles to a local SQLite database. In v0.3.0, the learning focus is connecting external API data to persistent local storage.
 
 ## Current features
 
@@ -13,10 +13,16 @@ WatchVault is a Python command-line learning project for searching movies and TV
 - Display runtime for movies or the number of seasons for TV series.
 - Handle searches with no results and basic timeout, network, and HTTP/API request errors.
 - Validate non-empty search input and numbered menu choices.
+- Initialize a local SQLite database when the application starts.
+- Add the selected movie or series to the local library and view saved titles from the CLI.
+- Store each title's local ID, TMDB ID, title, media type, and release year. A TMDB ID and media type combination can only be saved once; duplicate additions are reported without crashing.
+- Use parameterized SQL for title inserts.
 
 ## Technologies used
 
 - Python
+- SQLite for local persistent storage
+- Python's built-in `sqlite3` module for SQLite database access
 - [The Movie Database (TMDB) API](https://developer.themoviedb.org/docs)
 - `requests` for HTTP requests
 - `python-dotenv` for loading environment variables from `.env`
@@ -26,11 +32,14 @@ WatchVault is a Python command-line learning project for searching movies and TV
 ```text
 .
 ├── api.py          # TMDB search and title-detail requests
-├── main.py         # Command-line menu, search, and title details
+├── database.py     # SQLite initialization and title operations
+├── main.py         # Command-line menu, search, title details, and library
+├── schema.sql      # SQLite titles table definition
 ├── validation.py   # CLI input validation
 ├── tests/          # Reserved for future automated tests
 ├── .env            # Local TMDB token; create this file yourself
-└── .gitignore      # Keeps .env and other local files out of Git
+├── watchvault.db   # Generated local SQLite database; ignored by Git
+└── .gitignore      # Keeps local secrets and database files out of Git
 ```
 
 ## Setup
@@ -59,18 +68,17 @@ From the project root, run:
 python main.py
 ```
 
-Choose the search option, enter a movie or series title, and select a result by its displayed number to view its TMDB details.
+Choose the search option, enter a movie or series title, and select a result by its displayed number to view its TMDB details. Choose **Add to Library** to save it locally. Use **My Library** from the main menu to list saved titles. The database is created as `watchvault.db` in the project directory and is ignored by Git.
 
 ## Current project status / version
 
-WatchVault is an early-stage learning and portfolio project. **Current version: v0.2.0.** The CLI supports searching, selecting a TMDB result, and viewing its details. The displayed “Add to Library” option is a placeholder; this version does not save a library.
+WatchVault is an early-stage learning and portfolio project. **Current version: v0.3.0.** The CLI supports searching TMDB, viewing selected title details, and saving and listing titles in a local SQLite library.
 
 ## Short roadmap
 
 Future goals include:
 
-- v0.3.0: A local SQLite library
-- Personal watch tracking
+- v0.4.0: Personal tracking with watch status, favorites, and personal ratings
 - Genres and series progress
 - Library search and filtering
 - Metadata refreshing
