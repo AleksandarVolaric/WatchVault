@@ -1,6 +1,7 @@
 from validation import (
     get_non_empty_text, 
     get_menu_choice,
+    get_rating,
 )
 
 from api import (
@@ -12,7 +13,17 @@ from database import (
     init_db,
     add_title,
     get_all_titles,
+    update_status,
+    update_favorite,
+    update_rating,
 )
+
+STATUS_LABELS = {
+    "plan_to_watch": "Plan to Watch",
+    "watching": "Watching",
+    "completed":"Completed",
+    "dropped": "Dropped",
+}
 
 
 
@@ -26,7 +37,7 @@ def search_title_flow():
 
     if not results:
         print("No movies or Series found")
-        return    
+        return
     
     for number, result in enumerate(results, start=1):
         if result["media_type"] == "movie":
@@ -41,6 +52,7 @@ def search_title_flow():
             year = date[:4]
         else:
             year = "Unknown"
+        
 
         print(f"{number}. {name} ({year}) [{display_type}]")
 
@@ -113,8 +125,17 @@ def library_menu():
 
     print("\n--- My Library ---")
 
-    for row in titles:
-        id, tmdb_id, name, media_type, release_year = row
+    for number, row in enumerate(titles, start=1):
+        (
+            id, 
+            tmdb_id, 
+            name, 
+            media_type, 
+            release_year, 
+            status, 
+            favorite, 
+            personal_rating,
+        ) = row
 
         if media_type == "movie":
             display_type = "Movie"
@@ -126,21 +147,99 @@ def library_menu():
         else:
             display_year = release_year
 
-        print(f"{id}. {name} ({display_year}) [{display_type}]")
+        display_status = STATUS_LABELS[status]
+
+        print(f"{number}. {name} ({display_year}) [{display_type}] {display_status}")
+
+
+    choice = get_menu_choice("Choose a title: ", 1, len(titles))
+    selected_title = titles[choice - 1]
+    (
+        selected_id,
+        selected_tmdb_id,
+        selected_name,
+        selected_media_type,
+        selected_release_year,
+        selected_status,
+        selected_favorite,
+        selected_rating,
+) = selected_title
+
+    display_status = STATUS_LABELS[selected_status]
+
+    if selected_favorite == 1:
+        display_favorite = "Yes"
+    else:
+        display_favorite = "No"
+
+    if selected_rating is None:
+        display_rating = "Not rated"
+    else:
+        display_rating = f"{selected_rating}/10"
+
+    print(f"\n--- {selected_name} ---")
+    print(f"Status: {display_status}")
+    print(f"Favorite: {display_favorite}")
+    print(f"Personal Rating: {display_rating}")
+
+    print("\n1. Change Status")
+    print("2. Toggle Favorite")
+    print("3. Set Rating")
+    print("4. Back")
+
+    action_choice = get_menu_choice("Choose an action: ", 1, 4)
+
+    if action_choice == 1:
+        if selected_media_type == "movie":
+            statuses = ["plan_to_watch", "completed", "dropped"]
+
+        elif selected_media_type == "tv":
+            statuses = ["plan_to_watch", "watching", "completed", "dropped"]
+
+        print("\n--- Change Status ---")
+        for number, status in enumerate(statuses, start=1):
+            print(f"{number}. {STATUS_LABELS[status]}")
+
+        status_choice = get_menu_choice("Choose a status: ", 1, len(statuses))
+        selected_status = statuses[status_choice - 1]
+        update_status(selected_id, selected_status)
+
+        if selected_status == "plan_to_watch" or selected_status == "watching":
+            update_rating(selected_id, None)
+
+    elif action_choice == 2:
+        if selected_favorite == 0:
+            new_favorite = 1
+        else:
+            new_favorite = 0
+        update_favorite(selected_id, new_favorite)
+
+    elif action_choice == 3:
+        if selected_status == "completed" or selected_status == "dropped":
+            new_rating = get_rating("Enter your rating (1-10): ")
+            update_rating(selected_id, new_rating)
+        else:
+            print("You can only rate titles that are Completed or Dropped.")
+
+    elif action_choice == 4:
+        return 
+
 
 
 
 # 2. My Library
-#    - View all titles
-#    - Search my library
-#    - Currently watching
-#    - Plan to watch
-#    - Completed
-#    - Dropped
-#    - Favorites
-#    - Filter by genre
-#    - Movies only
-#    - Series only
+# - View all titles        +
+# - Edit status            +
+# - Toggle favorite        +
+# - Set personal rating    +
+#
+# Later:
+# - Search my library
+# - Filter by status
+# - Favorites view
+# - Filter by genre
+# - Movies only
+# - Series only
 
 # 3. Exit
 

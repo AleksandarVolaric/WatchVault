@@ -25,10 +25,16 @@ def get_menu_choice(prompt, min_choice, max_choice):
         )
 
 
+def get_rating(prompt):
+    while True:
+        rating = input(prompt).strip()
+        if rating.isdigit():
+            rating_int = int(rating)
+            if 1 <= rating_int <= 10:
+                return rating_int
 
-
+        print("Invalid rating. Please enter a number between 1 and 10.")
 
 
 # LATER
-# Rating int 1-10
 # Proper number for searies or seasons
