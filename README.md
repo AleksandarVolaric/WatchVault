@@ -1,132 +1,186 @@
 # WatchVault
 
-WatchVault is a Python command-line learning project for searching movies and TV series with The Movie Database (TMDB) API and saving selected titles to a local SQLite database. In v0.4.0, the learning focus is personal watch tracking, editable user-owned data, and SQL `UPDATE` operations.
+WatchVault is a Python command-line learning project for searching movies and TV series with the TMDB API and managing a personal library in a local SQLite database.
 
-## Current features
+**Current version: v0.5.0**
 
-- Search TMDB for movies and TV series.
-- Send HTTP GET requests with `requests`, query parameters for search, and Bearer token authentication.
-- Parse search JSON and filter results to movies and TV series.
-- Display numbered search results with each title, release year, and media type.
-- Select a result and use its TMDB ID and media type to request detailed information.
-- Movies use TMDB's `/movie/{id}` endpoint; TV series use `/tv/{id}`.
-- Display title, release or first-air year, type, genres, TMDB rating, overview, and runtime or number of seasons.
+The main learning focus of v0.5.0 is relational database design: **many-to-many relationships, foreign keys, junction tables, SQL JOINs, and genre filtering**.
+
+## Features
+
+### TMDB Search
+
+- Search for movies and TV series through TMDB.
+- Display numbered search results with title, year, and media type.
+- Select a result and request detailed information using its TMDB ID.
+- Display genres, TMDB rating, overview, runtime for movies, and season count for series.
 - Handle missing dates, empty results, timeouts, network errors, and HTTP/API errors.
-- Validate non-empty text, numbered menu choices, and personal ratings.
-- Save selected movies and series to a persistent local SQLite library.
-- Prevent duplicate library entries using the TMDB ID and media type.
-- View all locally saved titles.
-- Manage individual saved titles from the library.
 
-### Personal tracking
+### Local Library
 
-Each saved title can now store personal tracking data.
+- Save selected titles to a persistent SQLite database.
+- Prevent duplicate titles using TMDB ID and media type.
+- View all saved titles.
+- Store personal watch status, favorite state, and personal rating.
+- Display locally stored genres for saved titles.
 
-**Movies**
+**Movie statuses**
 - Plan to Watch
 - Completed
 - Dropped
 
-**TV series**
+**Series statuses**
 - Plan to Watch
 - Watching
 - Completed
 - Dropped
 
-Both movies and series support:
+Personal ratings use a **1–10** scale and are available only for `Completed` or `Dropped` titles.
 
-- Favorite: Yes / No
-- Personal rating from 1–10
-- Editing the current status
-- Toggling favorite status
-- Updating the personal rating
+Changing a title back to `Plan to Watch`, or a series to `Watching`, clears its existing personal rating.
 
-Personal ratings are only allowed for titles with a status of `Completed` or `Dropped`.
+### Genre Filtering
 
-If a title is changed back to `Plan to Watch`, or a series is changed to `Watching`, its existing personal rating is cleared because the rating is no longer valid for that status.
+Genres from TMDB are stored locally using a many-to-many relationship:
 
-## Technologies used
+```text
+titles
+   ↕
+title_genres
+   ↕
+genres
+```
+
+A title can have multiple genres, while the same genre can belong to multiple titles.
+
+The library can be filtered by its locally stored genres:
+
+```text
+--- My Library ---
+
+1. View All Titles
+2. Filter By Genre
+3. Back
+```
+
+For example:
+
+```text
+--- Action ---
+
+1. Captain America: Civil War (2016) [Movie] Completed
+```
+
+Genre retrieval and filtering use SQL `JOIN` queries rather than making additional TMDB requests.
+
+## Database
+
+The SQLite database contains three tables:
+
+### `titles`
+
+Stores saved movies and series together with personal tracking data.
+
+```text
+id
+tmdb_id
+title
+media_type
+release_year
+status
+favorite
+personal_rating
+```
+
+### `genres`
+
+Stores genres received from TMDB.
+
+```text
+id
+tmdb_id
+name
+```
+
+TMDB genre IDs are unique, preventing duplicate genre rows.
+
+### `title_genres`
+
+Junction table connecting titles and genres.
+
+```text
+title_id
+genre_id
+```
+
+`title_id` and `genre_id` are foreign keys. Together they form a composite primary key, preventing duplicate title-genre relationships.
+
+Foreign-key enforcement is enabled for every SQLite connection.
+
+## Technologies
 
 - Python
-- SQLite for local persistent storage
-- Python's built-in `sqlite3` module for database access
-- [The Movie Database (TMDB) API](https://developer.themoviedb.org/docs)
-- `requests` for HTTP requests
-- `python-dotenv` for loading environment variables from `.env`
+- SQLite and Python's built-in `sqlite3`
+- TMDB API
+- `requests`
+- `python-dotenv`
+- SQL including `SELECT`, `INSERT`, `INSERT OR IGNORE`, `UPDATE`, `WHERE`, `JOIN`, `ORDER BY`, foreign keys, composite primary keys, and `UNIQUE` constraints
 
-## Project structure
+## Project Structure
 
 ```text
 .
-├── api.py          # TMDB search and title-detail requests
-├── database.py     # SQLite initialization, queries, inserts, and updates
-├── main.py         # CLI flow, TMDB search, library, and personal tracking
-├── schema.sql      # SQLite database schema
-├── validation.py   # CLI input and personal-rating validation
+├── api.py          # TMDB API communication
+├── database.py     # SQLite queries and database operations
+├── main.py         # CLI and application flow
+├── schema.sql      # Relational database schema
+├── validation.py   # Reusable input validation
 ├── tests/          # Reserved for future automated tests
-├── .env            # Local TMDB token; create this file yourself
-├── watchvault.db   # Generated local SQLite database; ignored by Git
-└── .gitignore      # Keeps local secrets and database files out of Git
+├── .env            # Local TMDB token; not committed
+├── watchvault.db   # Generated local database; not committed
+└── .gitignore
 ```
-
-## Local database
-
-The `titles` table currently stores:
-
-- Local database ID
-- TMDB ID
-- Title
-- Media type
-- Release year
-- Personal watch status
-- Favorite state
-- Personal rating
-
-New titles start with:
-
-- Status: `Plan to Watch`
-- Favorite: `No`
-- Personal rating: `Not rated`
-
-The combination of TMDB ID and media type is unique, preventing the same TMDB title from being added twice.
 
 ## Setup
 
-1. Install the dependencies:
+Install the dependencies:
 
-   ```bash
-   python -m pip install requests python-dotenv
-   ```
+`python -m pip install requests python-dotenv`
 
-2. Create a `.env` file in the project root.
+Create a `.env` file in the project root:
 
-3. Add your TMDB API Read Access Token:
+`TMDB_TOKEN=your_token`
 
-   ```dotenv
-   TMDB_TOKEN=their_token
-   ```
+Replace `your_token` with your TMDB API Read Access Token.
 
-   Replace `their_token` with your own token.
+**Never commit your real TMDB token.**
 
-   The `.env` file is ignored by Git. **Never commit your real TMDB token.**
-
-## How to run
+## Run
 
 From the project root:
 
-```bash
-python main.py
-```
+`python main.py`
 
-From the main menu you can:
+The main menu provides:
+
+```text
+--- WatchVault ---
 
 1. Search for a movie or series
-2. Open My Library
+2. My Library
 3. Exit
+```
 
-After selecting a TMDB search result, choose **Add to Library** to save it locally.
+Search results can be opened for detailed TMDB information and added to the local library.
 
-Inside **My Library**, select a saved title to:
+Inside **My Library**, titles can be managed or filtered by genre.
 
-1. Change Status
-2. Toggle Favorite
+## Short Roadmap
+
+Future goals include:
+
+- Series progress tracking
+- Library search, filtering, and additional views
+- External TMDB metadata refreshing
+- JSON backup and import
+- Automated testing, cleanup, documentation, and a v1.0 release

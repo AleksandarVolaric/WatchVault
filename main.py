@@ -16,12 +16,19 @@ from database import (
     update_status,
     update_favorite,
     update_rating,
+    add_genre,
+    get_genre_id,
+    add_title_genre,
+    get_title_id,
+    get_title_genres,
+    get_all_genres,
+    get_titles_by_genre,
 )
 
 STATUS_LABELS = {
     "plan_to_watch": "Plan to Watch",
     "watching": "Watching",
-    "completed":"Completed",
+    "completed": "Completed",
     "dropped": "Dropped",
 }
 
@@ -108,6 +115,15 @@ def search_title_flow():
     if choice == 1:
         added = add_title(selected_id, title, selected_media_type, release_year)
         if added:
+            title_id = get_title_id(selected_id, selected_media_type)
+
+            for genre in genres:
+                genre_tmdb_id = genre["id"]
+                genre_name = genre["name"]
+                add_genre(genre_tmdb_id, genre_name)
+                genre_id = get_genre_id(genre_tmdb_id)
+                add_title_genre(title_id, genre_id)
+
             print(f"{title} was added to your library.")
         else:
             print(f"{title} is already in your library.")
@@ -117,7 +133,60 @@ def search_title_flow():
 
 
 # LIBRARY FLOW
-def library_menu():
+def filter_by_genre():
+    genres = get_all_genres()
+
+    if not genres:
+        print("\nNo genres are available in your library.")
+        return
+
+    print("\n--- Filter by Genre ---")
+
+    for number, genre in enumerate(genres, start=1):
+        genre_id, genre_name = genre
+        print(f"{number}. {genre_name}")
+
+    genre_choice = get_menu_choice("Choose a genre: ", 1, len(genres))
+    selected_genre = genres[genre_choice - 1]
+    selected_genre_id, selected_genre_name = selected_genre
+    filtered_titles = get_titles_by_genre(selected_genre_id)
+    
+    if not filtered_titles:
+        print(f"\nNo titles found for {selected_genre_name}.")
+        return
+
+    print(f"\n--- {selected_genre_name} ---")
+
+    for number, row in enumerate(filtered_titles, start=1):
+        (
+            title_id,
+            title,
+            media_type,
+            release_year,
+            status,
+            favorite,
+            personal_rating,
+        ) = row
+
+        if media_type == "movie":
+            display_type = "Movie"
+        else:
+            display_type = "Series"
+
+        if release_year is None:
+            display_year = "Unknown"
+        else:
+            display_year = release_year
+
+        display_status = STATUS_LABELS[status]
+
+        print(
+            f"{number}. {title} ({display_year}) "
+            f"[{display_type}] {display_status}"
+        )
+
+
+def view_all_titles():
     titles = get_all_titles()
     if not titles:
         print("\nYour library is empty.")
@@ -165,6 +234,8 @@ def library_menu():
         selected_rating,
 ) = selected_title
 
+    selected_genres = get_title_genres(selected_id)
+    display_genres = ", ".join(selected_genres)
     display_status = STATUS_LABELS[selected_status]
 
     if selected_favorite == 1:
@@ -181,6 +252,7 @@ def library_menu():
     print(f"Status: {display_status}")
     print(f"Favorite: {display_favorite}")
     print(f"Personal Rating: {display_rating}")
+    print(f"Genres: {display_genres}")
 
     print("\n1. Change Status")
     print("2. Toggle Favorite")
@@ -225,19 +297,33 @@ def library_menu():
         return 
 
 
+def library_menu():
+    print("\n--- My Library ---")
+    print("1. View All Titles")
+    print("2. Filter By Genre")
+    print("3. Back")
 
+    choice = get_menu_choice("Choose an option: ", 1, 3)
 
+    if choice == 1:
+        view_all_titles()
+
+    elif choice == 2:
+        filter_by_genre()
+
+    elif choice == 3:
+        return
 # 2. My Library
 # - View all titles        +
 # - Edit status            +
 # - Toggle favorite        +
 # - Set personal rating    +
+# - Filter by genre        +
 #
 # Later:
 # - Search my library
 # - Filter by status
 # - Favorites view
-# - Filter by genre
 # - Movies only
 # - Series only
 
